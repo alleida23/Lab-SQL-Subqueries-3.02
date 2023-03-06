@@ -105,24 +105,29 @@ WHERE country = 'Canada';
 -- First you will have to find the most prolific actor and then use that actor_id
 -- to find the different films that he/she starred.
 
-SELECT * from film_actor LIMIT 5;
-SELECT * FROM film LIMIT 5;
 
 #actors and appearances. --> inner query
-SELECT fa.actor_id, COUNT(fa.film_id) as appearances
-FROM film_actor fa
-GROUP BY fa.actor_id
-ORDER BY appearances desc;
-#LIMIT 1; #107
+SELECT actor_id #, COUNT(fa.film_id) as appearances
+FROM film_actor
+GROUP BY actor_id
+ORDER BY COUNT(film_id) desc
+LIMIT 1; #107
 
-#PROVISIONAL SOLUTION
+
 SELECT title
 FROM film
 WHERE film_id in (
-		SELECT film_id
-        FROM film 
-		JOIN film_actor USING (film_id) 
-		WHERE film_actor.actor_id=107);
+	SELECT film_id
+	FROM film 
+	JOIN film_actor USING (film_id) 
+	WHERE actor_id = (
+		SELECT actor_id
+		FROM film_actor
+		GROUP BY actor_id
+		ORDER BY COUNT(film_id) desc
+		LIMIT 1
+        ));                            #actor id 107 = the most prolific;
+
 
 
 
@@ -130,47 +135,38 @@ WHERE film_id in (
 -- You can use the customer table and payment table to find the most profitable customer
 -- ie the customer that has made the largest sum of payments
 
-SELECT * FROM payment LIMIT 5; #rental_id
-SELECT * FROM customer LIMIT 5;
-SELECT * FROM rentAL limit 5; #inventory_id
-SELECT * from inventory limit 5; #film_id
-SELECT * from FILM limit 5; #film_id title
 
-SELECT customer_id, sum(amount) AS total_amount.
+SELECT customer_id, sum(amount) AS total_amount
 FROM payment
 GROUP BY customer_id
-ORDER BY total_amount desc; #most profitable customer_id 526
+ORDER BY total_amount desc
+LIMIT 1; #most profitable customer_id 526
 
-#provisional solution:		
+    
+SELECT customer_id
+FROM payment
+GROUP BY customer_id
+ORDER BY sum(amount) desc
+LIMIT 1;                      #getting customer_id 526
+ 
+ 
+# ALL IN ONE ATTEMPT
+    
 SELECT title
 FROM film
 WHERE film_id IN (
 	SELECT film_id
     FROM inventory
-    WHERE inventory_id IN (
+    WHERE inventory_id IN (                                       
 		SELECT inventory_id
-        FROM rental
-        WHERE customer_id = 526
-            ));        
-
-SELECT title
-FROM film
-WHERE film_id IN (
-	SELECT film_id
-    FROM inventory
-    WHERE inventory_id IN (
-		SELECT inventory_id
-        FROM rental
-        WHERE customer_id IN (
-			SELECT customer_id, max(sum(amount)) AS total_amount
+        FROM rental                
+        WHERE customer_id = (                                      
+			SELECT customer_id                #getting customer id 526
 			FROM payment
-			#GROUP BY customer_id
-            #HAVING max(sum(amount))
-			#ORDER BY total_amount desc
-            )));
-
-
-
+			GROUP BY customer_id
+			ORDER BY sum(amount) desc
+			LIMIT 1
+				)));
 
 
 # 8. Customers who spent more than the average payments.
